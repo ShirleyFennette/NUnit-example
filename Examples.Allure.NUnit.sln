@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{406D51B7-D2A8-4264-9353-3BDA7A90DCB2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{EDC2C328-8C9D-487E-A795-3D9F111DC065}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.Allure.NUnit.Test", "tests\Examples.Allure.NUnit.Test\Examples.Allure.NUnit.Test.csproj", "{3D793282-9E3C-4F0E-BBBA-AC66540A2C67}"
+EndProject
+
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3D793282-9E3C-4F0E-BBBA-AC66540A2C67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D793282-9E3C-4F0E-BBBA-AC66540A2C67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D793282-9E3C-4F0E-BBBA-AC66540A2C67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D793282-9E3C-4F0E-BBBA-AC66540A2C67}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3D793282-9E3C-4F0E-BBBA-AC66540A2C67} = {406D51B7-D2A8-4264-9353-3BDA7A90DCB2}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C9EB3140-7CE3-43B5-86F1-3FCD8F29CDA7}
+	EndGlobalSection
+EndGlobal

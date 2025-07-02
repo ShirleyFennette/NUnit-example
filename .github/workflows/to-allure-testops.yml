@@ -22,7 +22,7 @@ env:
   ALLURE_PROJECT_ID: 1605
   ALLURE_TOKEN: 67aad6fa-966a-49ef-a598-e572b3e030f9
 
-obs:
+Jobs:
   all-tests:
     runs-on: windows-latest
     

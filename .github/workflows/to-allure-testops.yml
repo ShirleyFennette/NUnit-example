@@ -22,7 +22,7 @@ env:
   ALLURE_PROJECT_ID: 1605
   ALLURE_TOKEN: 67aad6fa-966a-49ef-a598-e572b3e030f9
 
-jobs:
+obs:
   all-tests:
     runs-on: windows-latest
     
@@ -34,6 +34,9 @@ jobs:
         with:
           dotnet-version: '6.0.x'
           
+      - name: Add NuGet.org source
+        run: dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+      
       - name: Restore dependencies
         run: dotnet restore
       

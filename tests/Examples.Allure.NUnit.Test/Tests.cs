@@ -1,9 +1,10 @@
 using NUnit.Allure.Core;
 using NUnit.Framework;
 using Allure.NUnit.Attributes;
+using System;
 
 [TestFixture]
-[AllureNUnit]
+[AllureNUnitAttribute]
 public class Tests
 {
     [Test]
@@ -18,4 +19,8 @@ public class Tests
     {
         Assert.Pass();
     }
+}
+
+internal class Test2Attribute : Attribute
+{
 }

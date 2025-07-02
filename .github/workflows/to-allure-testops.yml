@@ -1,0 +1,51 @@
+name: upload-to-allure-testops
+
+on:
+  # push:
+  workflow_dispatch:
+    inputs:
+      TEST_ENDPOINT:
+        description: "Endpoint for tests"
+        required: true
+        default: https://testing.qatools.cloud
+      ALLURE_JOB_RUN_ID:
+        description: "ALLURE_JOB_RUN_ID service parameter. Leave blank."
+        required: false
+      ALLURE_USERNAME:
+        description: "ALLURE_USERNAME service parameter. Leave blank"
+        required: false
+
+env:
+  ALLURE_TESTPLAN_PATH: "./testplan.json"
+  ALLURE_RESULTS: "allure-results"
+  ALLURE_ENDPOINT: https://testing.qatools.cloud/
+  ALLURE_PROJECT_ID: 1605
+  ALLURE_TOKEN: 67aad6fa-966a-49ef-a598-e572b3e030f9
+
+jobs:
+  all-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install allure-pytest pytest
+      - name: install and configure allurectl
+        uses: allure-framework/setup-allurectl@v1
+        with:
+          allure-endpoint: ${{ secrets.ALLURE_ENDPOINT }}
+          allure-token: ${{ secrets.ALLURE_TOKEN }}
+          allure-project-id: ${{ secrets.ALLURE_PROJECT_ID }}
+      - name: Run pytest tests
+        run: |
+          chmod +x exec-tests.sh
+          allurectl watch -- pytest ./tests --alluredir=${ALLURE_RESULTS} --capture=no
+        env:
+          TEST_ENDPOINT: ${{ github.event.inputs.TEST_ENDPOINT }}
+          TEST_BROWSER: ${{ github.event.inputs.TEST_BROWSER }}
+          ALLURE_TESTPLAN_PATH: "./testplan.json"
+          ALLURE_RESULTS: "allure-results"

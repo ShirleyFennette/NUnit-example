@@ -24,31 +24,30 @@ env:
 
 jobs:
   all-tests:
-    runs-on: windows-latest  # NUnit обычно используется в .NET среде, поэтому Windows runner
+    runs-on: windows-latest
+    
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.x'  # или актуальная версия .NET
-
-      - name: Install dependencies
+          dotnet-version: '6.0.x'
+          
+      - name: Restore dependencies
         run: dotnet restore
-
-      - name: install and configure allurectl
+      
+      - name: Install Allure CLI
         uses: allure-framework/setup-allurectl@v1
         with:
           allure-endpoint: ${{ secrets.ALLURE_ENDPOINT }}
           allure-token: ${{ secrets.ALLURE_TOKEN }}
           allure-project-id: ${{ secrets.ALLURE_PROJECT_ID }}
-
-      - name: Run NUnit tests
+      
+      - name: Run tests
         run: |
           dotnet test --logger:"trx;LogFileName=testresults.trx" --results-directory:./TestResults
-          # Конвертация результатов TRX в Allure (может потребоваться дополнительный инструмент)
-          # Например, используя Allure.TrxLogger или аналогичный конвертер
-          allurectl watch -- allure generate ./TestResults -o ${ALLURE_RESULTS}
+          allurectl watch -- allure generate ./TestResults -o allure-results
         env:
           TEST_ENDPOINT: ${{ github.event.inputs.TEST_ENDPOINT }}
           TEST_BROWSER: ${{ github.event.inputs.TEST_BROWSER }}

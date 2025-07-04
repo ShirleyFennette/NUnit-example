@@ -16,7 +16,6 @@ on:
         required: false
 
 env:
-  ALLURE_TESTPLAN_PATH: "./testplan.json"
   ALLURE_RESULTS: "allure-results"
   ALLURE_ENDPOINT: https://testing.qatools.cloud/
   ALLURE_PROJECT_ID: 1605
@@ -46,8 +45,7 @@ jobs:
       
       - name: Run tests
         run: |
-          dotnet test --logger:"trx;LogFileName=testresults.trx" --results-directory:./TestResults
-          allurectl watch -- allure generate ./TestResults -o allure-results
+          allurectl watch -- dotnet test --logger:"trx;LogFileName=testresults.trx" --results-directory:./TestResults
         env:
           TEST_ENDPOINT: ${{ github.event.inputs.TEST_ENDPOINT }}
           TEST_BROWSER: ${{ github.event.inputs.TEST_BROWSER }}

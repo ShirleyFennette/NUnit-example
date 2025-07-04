@@ -9,6 +9,7 @@ public class Tests
 {
     [Test]
     [Ignore("Причина игнорирования теста")]
+    [AllureDisplayIgnored]
     public void IgnoredTest()
     {
         Assert.Pass();

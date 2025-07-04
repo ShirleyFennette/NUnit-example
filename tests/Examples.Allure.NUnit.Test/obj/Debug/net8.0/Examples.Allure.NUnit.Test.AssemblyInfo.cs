@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Examples.Allure.NUnit.Test")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9eef1a44d92d0a32d3c587c1f10ebf11ec4d967b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7398b62fc8ba9e161f819f7a5a87eaa1e1639b0b")]
 [assembly: System.Reflection.AssemblyProductAttribute("Examples.Allure.NUnit.Test")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Examples.Allure.NUnit.Test")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

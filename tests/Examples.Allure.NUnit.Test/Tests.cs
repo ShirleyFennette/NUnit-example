@@ -8,7 +8,7 @@ using System;
 public class Tests
 {
     [Test]
-    
+    [Ignore("Причина игнорирования теста")]
     public void IgnoredTest()
     {
         Assert.Pass();

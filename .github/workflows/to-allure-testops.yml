@@ -16,7 +16,6 @@ on:
         required: false
 
 env:
-  ALLURE_TESTPLAN_PATH: "./testplan.json"
   ALLURE_RESULTS: "allure-results"
   ALLURE_ENDPOINT: https://testing.qatools.cloud/
   ALLURE_PROJECT_ID: 1605

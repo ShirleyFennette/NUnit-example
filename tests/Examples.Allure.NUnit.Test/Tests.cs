@@ -10,6 +10,7 @@ public class Tests
 {
     [Test]
     [Ignore("Причина игнорирования теста")]
+    [AllureId(111162)]
     
     public void IgnoredTest() => Assert.Pass();
 

@@ -1,9 +1,4 @@
-# Repository: ShirleyFennette/NUnit-example
-# Save in GitHub as .github/workflows/testops.yml
-# Secrets: ALLURE_ENDPOINT, ALLURE_TOKEN
-# Variable: ALLURE_PROJECT_ID (default: 72)
-
-name: Verify separate TestOps launches
+name: TestOps tests
 
 on:
   push:
@@ -16,8 +11,6 @@ env:
   ALLURE_ENDPOINT: https://testing.qatools.cloud
   ALLURE_TOKEN: 325e6a7b-f52d-4bae-9da0-32d67cdc3c63
   ALLURE_PROJECT_ID: '1605'
-  ALLURE_RESULTS: allure-results
-  ALLURE_LAUNCH_TAGS: github, multijob, separate-launches
   ALLURECTL_VERSION: '2.18.0'
 
 jobs:
@@ -26,146 +19,62 @@ jobs:
     timeout-minutes: 15
     outputs:
       launch_id: ${{ steps.tests.outputs.launch_id }}
+    env:
+      ALLURE_JOB_RUN_UID: ${{ github.run_id }}-${{ github.run_attempt }}-unit-tests
+      ALLURE_LAUNCH_NAME: ${{ github.repository }} - unit - ${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install test dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Download allurectl
+      - name: Prepare
         run: |
-          curl --fail --silent --show-error --location "https://github.com/allure-framework/allurectl/releases/download/${ALLURECTL_VERSION}/allurectl_linux_amd64" -o allurectl
+          python -m pip install -r requirements.txt
+          curl -fsSL "https://github.com/allure-framework/allurectl/releases/download/${ALLURECTL_VERSION}/allurectl_linux_amd64" -o allurectl
           chmod +x allurectl
-      - name: Run tests and collect TestOps IDs
+      - name: Test and upload
         id: tests
         shell: bash
         run: |
-          set -euo pipefail
-          : "${ALLURE_ENDPOINT:?Set ALLURE_ENDPOINT secret}"
-          : "${ALLURE_TOKEN:?Set ALLURE_TOKEN secret}"
-          : "${ALLURE_PROJECT_ID:?Set ALLURE_PROJECT_ID variable}"
-
           unset ALLURE_JOB_RUN_ID ALLURE_LAUNCH_ID
-          # Different UID for each job and each workflow attempt.
-          # verify-launches checks whether allurectl respected this override.
-          export ALLURE_JOB_RUN_UID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_JOB}"
-          export ALLURE_JOB_RUN_NAME="${GITHUB_JOB}"
-          export ALLURE_JOB_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          export ALLURE_LAUNCH_NAME="${GITHUB_REPOSITORY} - ${GITHUB_JOB} - ${ALLURE_JOB_RUN_UID}"
-          echo "Requested Job Run UID: ${ALLURE_JOB_RUN_UID}"
-
-          # Remove committed results before watch starts scanning.
-          rm -rf -- allure-results
-          test_status=0
-          ./allurectl watch -- python -m pytest tests/unit \
-            --alluredir="${ALLURE_RESULTS}" --clean-alluredir || test_status=$?
-
-          # Extract only Launch ID; do not print/export the full environment.
+          export ALLURE_RESULTS="${RUNNER_TEMP}/allure-results"
+          ./allurectl watch -- python -m pytest tests/unit --alluredir="$ALLURE_RESULTS"
           job_env="$(./allurectl job-run env)"
-          id_pattern="(^|[[:space:]])ALLURE_LAUNCH_ID=['\"]?([0-9]+)['\"]?([[:space:]]|$)"
-          if [[ ! "$job_env" =~ $id_pattern ]]; then
-            echo "::error::Cannot extract ALLURE_LAUNCH_ID from job-run env"
-            exit 1
-          fi
+          pattern="(^|[[:space:]])ALLURE_LAUNCH_ID=['\"]?([1-9][0-9]*)['\"]?([[:space:]]|$)"
+          [[ "$job_env" =~ $pattern ]] || { echo "Missing Launch ID"; exit 1; }
           launch_id="${BASH_REMATCH[2]}"
-          if [[ ! "$launch_id" =~ ^[1-9][0-9]*$ ]]; then
-            echo "::error::Invalid Launch ID"
-            exit 1
-          fi
-          echo "Launch ID: ${launch_id}"
-          echo "launch_id=${launch_id}" >> "$GITHUB_OUTPUT"
-          exit "$test_status"
-      - name: Save Allure results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-results-unit
-          path: allure-results/
-          if-no-files-found: warn
+          echo "Launch ID: $launch_id"
+          echo "launch_id=$launch_id" >> "$GITHUB_OUTPUT"
 
   func-test:
     needs: unit-tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    outputs:
-      launch_id: ${{ steps.tests.outputs.launch_id }}
+    env:
+      ALLURE_JOB_RUN_UID: ${{ github.run_id }}-${{ github.run_attempt }}-func-test
+      ALLURE_LAUNCH_NAME: ${{ github.repository }} - functional - ${{ github.run_id }}-${{ github.run_attempt }}
+      UNIT_LAUNCH: ${{ needs.unit-tests.outputs.launch_id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install test dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Download allurectl
+      - name: Prepare
         run: |
-          curl --fail --silent --show-error --location "https://github.com/allure-framework/allurectl/releases/download/${ALLURECTL_VERSION}/allurectl_linux_amd64" -o allurectl
+          python -m pip install -r requirements.txt
+          curl -fsSL "https://github.com/allure-framework/allurectl/releases/download/${ALLURECTL_VERSION}/allurectl_linux_amd64" -o allurectl
           chmod +x allurectl
-      - name: Run tests and collect TestOps IDs
+      - name: Test and upload
         id: tests
         shell: bash
         run: |
-          set -euo pipefail
-          : "${ALLURE_ENDPOINT:?Set ALLURE_ENDPOINT secret}"
-          : "${ALLURE_TOKEN:?Set ALLURE_TOKEN secret}"
-          : "${ALLURE_PROJECT_ID:?Set ALLURE_PROJECT_ID variable}"
-
           unset ALLURE_JOB_RUN_ID ALLURE_LAUNCH_ID
-          # Different UID for each job and each workflow attempt.
-          # verify-launches checks whether allurectl respected this override.
-          export ALLURE_JOB_RUN_UID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_JOB}"
-          export ALLURE_JOB_RUN_NAME="${GITHUB_JOB}"
-          export ALLURE_JOB_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          export ALLURE_LAUNCH_NAME="${GITHUB_REPOSITORY} - ${GITHUB_JOB} - ${ALLURE_JOB_RUN_UID}"
-          echo "Requested Job Run UID: ${ALLURE_JOB_RUN_UID}"
-
-          # Remove committed results before watch starts scanning.
-          rm -rf -- allure-results
-          test_status=0
-          ./allurectl watch -- python -m pytest tests/functional \
-            --alluredir="${ALLURE_RESULTS}" --clean-alluredir || test_status=$?
-
-          # Extract only Launch ID; do not print/export the full environment.
+          export ALLURE_RESULTS="${RUNNER_TEMP}/allure-results"
+          ./allurectl watch -- python -m pytest tests/functional --alluredir="$ALLURE_RESULTS"
           job_env="$(./allurectl job-run env)"
-          id_pattern="(^|[[:space:]])ALLURE_LAUNCH_ID=['\"]?([0-9]+)['\"]?([[:space:]]|$)"
-          if [[ ! "$job_env" =~ $id_pattern ]]; then
-            echo "::error::Cannot extract ALLURE_LAUNCH_ID from job-run env"
-            exit 1
-          fi
+          pattern="(^|[[:space:]])ALLURE_LAUNCH_ID=['\"]?([1-9][0-9]*)['\"]?([[:space:]]|$)"
+          [[ "$job_env" =~ $pattern ]] || { echo "Missing Launch ID"; exit 1; }
           launch_id="${BASH_REMATCH[2]}"
-          if [[ ! "$launch_id" =~ ^[1-9][0-9]*$ ]]; then
-            echo "::error::Invalid Launch ID"
-            exit 1
-          fi
-          echo "Launch ID: ${launch_id}"
-          echo "launch_id=${launch_id}" >> "$GITHUB_OUTPUT"
-          exit "$test_status"
-      - name: Save Allure results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-results-functional
-          path: allure-results/
-          if-no-files-found: warn
-
-  verify-launches:
-    needs: [unit-tests, func-test]
-    if: always()
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Require two different Launch IDs
-        env:
-          UNIT_LAUNCH: ${{ needs.unit-tests.outputs.launch_id }}
-          FUNCTIONAL_LAUNCH: ${{ needs.func-test.outputs.launch_id }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ ! "$UNIT_LAUNCH" =~ ^[1-9][0-9]*$ || ! "$FUNCTIONAL_LAUNCH" =~ ^[1-9][0-9]*$ ]]; then
-            echo "::error::Both jobs must report a positive Launch ID"
-            exit 1
-          fi
-          if [[ "$UNIT_LAUNCH" == "$FUNCTIONAL_LAUNCH" ]]; then
-            echo "::error::Both jobs uploaded to Launch ${UNIT_LAUNCH}; UID override did not separate launches"
-            exit 1
-          fi
-          echo "Separate launches confirmed: unit=${UNIT_LAUNCH}, functional=${FUNCTIONAL_LAUNCH}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Launch ID: $launch_id"
+          [[ -n "$UNIT_LAUNCH" && "$launch_id" != "$UNIT_LAUNCH" ]] || { echo "Launches are not separate"; exit 1; }
+          echo "Separate launches: $UNIT_LAUNCH and $launch_id" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,98 @@
+# Repository: ShirleyFennette/NUnit-example
+# Save in GitHub as .github/workflows/testops.yml
+# Secrets: ALLURE_ENDPOINT, ALLURE_TOKEN
+# Variable: ALLURE_PROJECT_ID (default: 72)
+
+name: Verify separate TestOps launches
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ALLURE_ENDPOINT: https://testing.qatools.cloud
+  ALLURE_TOKEN: 325e6a7b-f52d-4bae-9da0-32d67cdc3c63
+  ALLURE_PROJECT_ID: '1605'
+  ALLURE_RESULTS: allure-results
+  ALLURE_LAUNCH_TAGS: github, multijob, separate-launches
+  ALLURECTL_VERSION: '2.18.0'
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      launch_id: ${{ steps.tests.outputs.launch_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download allurectl
+        run: |
+          curl --fail --silent --show-error --location "https://github.com/allure-framework/allurectl/releases/download/${ALLURECTL_VERSION}/allurectl_linux_amd64" -o allurectl
+          chmod +x allurectl
+      # The repository contains results from a previous local run.
+      - name: Remove previous test results
+        run: python -c "import shutil; shutil.rmtree('allure-results', ignore_errors=True)"
+      - name: Run tests and collect TestOps IDs
+        id: tests
+        run: python scripts/run_suite.py unit
+      - name: Save Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-unit
+          path: allure-results/
+          if-no-files-found: warn
+
+  func-test:
+    needs: unit-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      launch_id: ${{ steps.tests.outputs.launch_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download allurectl
+        run: |
+          curl --fail --silent --show-error --location "https://github.com/allure-framework/allurectl/releases/download/${ALLURECTL_VERSION}/allurectl_linux_amd64" -o allurectl
+          chmod +x allurectl
+      # The repository contains results from a previous local run.
+      - name: Remove previous test results
+        run: python -c "import shutil; shutil.rmtree('allure-results', ignore_errors=True)"
+      - name: Run tests and collect TestOps IDs
+        id: tests
+        run: python scripts/run_suite.py functional
+      - name: Save Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-functional
+          path: allure-results/
+          if-no-files-found: warn
+
+  verify-launches:
+    needs: [unit-tests, func-test]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require two different Launch IDs
+        env:
+          UNIT_LAUNCH: ${{ needs.unit-tests.outputs.launch_id }}
+          FUNCTIONAL_LAUNCH: ${{ needs.func-test.outputs.launch_id }}
+        run: python scripts/verify_launches.py
